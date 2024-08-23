@@ -42,8 +42,8 @@ def merge_normal_tumor_snps(resultsdir, tumor_id, normal_id):
     normalfile = pd.read_csv(resultsdir + "/TEMPMAFfiles/tempMuTect2/" + normal_id + ".bam.maf", sep = "\t", header=1, low_memory=False)
     
     # subset for snps only 
-    tumorfile = tumorfile.loc[tumorfile["Variant_Type" == "SNP"]]
-    normalfile = normalfile.loc[normalfile["Variant_Type" == "SNP"]]
+    tumorfile = tumorfile.loc[tumorfile["Variant_Type"] == "SNP"]
+    normalfile = normalfile.loc[normalfile["Variant_Type"] == "SNP"]
 
     # keep only vars that are not in the normal 
     df_merged_outer = pd.merge(tumorfile[['Chromosome','Start_Position',
@@ -60,8 +60,8 @@ def merge_normal_tumor_indels(resultsdir, tumor_id, normal_id):
     normalfile = pd.read_csv(resultsdir + "/TEMPMAFfiles/tempMuTect2/" + normal_id + ".bam.maf", sep = "\t", header=1, low_memory=False)
     
     # subset for snps only 
-    tumorfile = tumorfile.loc[tumorfile["Variant_Type" != "SNP"]]
-    normalfile = normalfile.loc[normalfile["Variant_Type" != "SNP"]]
+    tumorfile = tumorfile.loc[tumorfile["Variant_Type"] != "SNP"]
+    normalfile = normalfile.loc[normalfile["Variant_Type"] != "SNP"]
 
     # keep only vars that are not in the normal 
     df_merged_outer = pd.merge(tumorfile, normalfile[['Chromosome','Start_Position',
@@ -157,8 +157,8 @@ def variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,mi
 
     tumorfile = pd.read_csv(resultsdir + "/MuTect2_results/" + tumor_id + "_temp.bam.maf", sep = "\t", header = 1, low_memory = False)
 
-    tumorfile_snp = tumorfile.loc[tumorfile["Variant_Type" == "SNP"]]
-    tumorfile_indel = tumorfile.loc[tumorfile["Variant_Type" != "SNP"]] 
+    tumorfile_snp = tumorfile.loc[tumorfile["Variant_Type"] == "SNP"]
+    tumorfile_indel = tumorfile.loc[tumorfile["Variant_Type"] != "SNP"]
 
     tumorfile_snp = tumorfile_snp[['Chromosome','Start_Position',
         'Reference_Allele','Tumor_Seq_Allele2','Variant_Classification','Variant_Type']]
