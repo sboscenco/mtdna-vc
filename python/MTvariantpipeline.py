@@ -10,27 +10,22 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 import re
 
-
-    
-def call_vars_normal(tumorbam, normalbam, mtchrom, minmapq, minbq, fasta, datadir, normaldir, vcfdir, bcfploidy_genome):
+## For calling snps   
+def call_vars_normal(tumorbam, normalbam, mtchrom, minmapq, minbq, fasta, datadir, normaldir, vcfdir, ncbibuild):
     subprocess.run(f"bcftools mpileup --region {mtchrom} --count-orphans --no-BAQ --min-MQ {minmapq} --min-BQ {minbq} " \
                 + "--ignore-RG --skip-any-set UNMAP,SECONDARY,QCFAIL,DUP --annotate DP,AD,ADF,ADR --gap-frac 0.005 " \
-                + f"--tandem-qual 80 -L 1000000 -d 1000000 --open-prob 30 --fasta-ref {fasta} {datadir}/{tumorbam} {normaldir}/{normalbam} " \
-                + f"| bcftools call --multiallelic-caller --ploidy {bcfploidy_genome} --keep-alts " \
-                + f"| bcftools norm --multiallelics -any --do-not-normalize - > {vcfdir}/{tumorbam}_tempnorm.vcf ", shell = True, check = True)
-    subprocess.run(f"vt normalize {vcfdir}/{tumorbam}_tempnorm.vcf -r {fasta} -q" \
-               + f"| bcftools query --format '%CHROM\t%POS\t%REF\t%ALT[\t%AD\t%DP\t%ADF\t%ADR]\n' > {vcfdir}/{tumorbam}_temp.maf", shell = True, check = True)
+                + f"--tandem-qual 80 -L 1000000 -d 1000000 --open-prob 30 --skip-indels --fasta-ref {fasta} {datadir}/{tumorbam} {normaldir}/{normalbam} " \
+                + f"| bcftools call --multiallelic-caller --ploidy {ncbibuild} --keep-alts -v " \
+                + f"| bcftools query --format '%CHROM\t%POS\t%REF\t%ALT[\t%AD\t%DP\t%ADF\t%ADR]\n' > {vcfdir}/{tumorbam}_temp.maf", shell = True, check = True)
 
     print(f'Done with COUNT CALL for {tumorbam} + {normalbam}')
  
-def call_vars(tumorbam, mtchrom, minmapq, minbq, fasta, datadir, vcfdir, bcfploidy_genome):
+def call_vars(tumorbam, mtchrom, minmapq, minbq, fasta, datadir, vcfdir, ncbibuild):
     subprocess.run(f"bcftools mpileup --region {mtchrom} --count-orphans --no-BAQ --min-MQ {minmapq} --min-BQ {minbq} " \
                 + "--ignore-RG --skip-any-set UNMAP,SECONDARY,QCFAIL,DUP --annotate DP,AD,ADF,ADR --gap-frac 0.005 " \
-                + f"--tandem-qual 80 -L 1000000 -d 1000000 --open-prob 30 --fasta-ref {fasta} {datadir}/{tumorbam}  " \
-                + f"| bcftools call --multiallelic-caller --ploidy {bcfploidy_genome} --keep-alts " \
-                + f"| bcftools norm --multiallelics -any --do-not-normalize - > {vcfdir}/{tumorbam}_tempnorm.vcf ", shell = True, check = True)
-    subprocess.run(f"vt normalize {vcfdir}/{tumorbam}_tempnorm.vcf -r {fasta} -q" \
-               + f"| bcftools query --format '%CHROM\t%POS\t%REF\t%ALT[\t%AD\t%DP\t%ADF\t%ADR]\n' > {vcfdir}/{tumorbam}_temp.maf", shell = True, check = True)
+                + f"--tandem-qual 80 -L 1000000 -d 1000000 --open-prob 30 --skip-indels --fasta-ref {fasta} {datadir}/{tumorbam}  " \
+                + f"| bcftools call --multiallelic-caller --ploidy {ncbibuild} --keep-alts -v " \
+                + f"| bcftools query --format '%CHROM\t%POS\t%REF\t%ALT[\t%AD\t%DP\t%ADF\t%ADR]\n' > {vcfdir}/{tumorbam}_temp.maf", shell = True, check = True)
     
     print(f'Done with COUNT CALL for {tumorbam}')
 
@@ -62,11 +57,7 @@ def process_tempmaf(vcfdir, tumorbam, normalbam, molecule, minstrand):
         tempmaf.drop(columns = ["N_Allelic_Depth", "N_ForwardDepth", "N_ReverseDepth"], inplace = True)
 
     else:
-<<<<<<< HEAD
-        tempmaf.columns = ["Chromosome", "Start_Position", "Reference_Allele", "Tumor_Seq_Allele2", "Allelic_Depth", "t_depth", "T_ForwardDepth", "T_ReverseDepth"]
-=======
         tempmaf.columns = ["Chromosome", "Start_Position", "Reference_Allele", "Tumor_Seq_Allele2", "T_Allelic_Depth", "t_depth", "T_ForwardDepth", "T_ReverseDepth"]
->>>>>>> origin/master
         tempmaf["Normal_Sample_Barcode"] = ""
 
     tempmaf["Tumor_Sample_Barcode"] = tumorbam[:-4]
