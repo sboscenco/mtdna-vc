@@ -352,7 +352,11 @@ __DATA__
  perl maf2vcf.pl --help
  perl maf2vcf.pl --input-maf test.maf --output-dir vcfs
 
+<<<<<<< HEAD
 =head1 OPTIONS
+=======
+fa=head1 OPTIONS
+>>>>>>> origin/master
 
  --input-maf      Path to input file in MAF format
  --output-dir     Path to output directory where VCFs will be stored, one per TN-pair

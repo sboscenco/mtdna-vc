@@ -96,6 +96,10 @@ def variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,mi
 
     os.makedirs(f"{resultsdir}/MuTect2_results", exist_ok = True)
     os.makedirs(f"{resultsdir}/MTvariant_results", exist_ok = True)
+<<<<<<< HEAD
+=======
+    os.makedirs(f"{resultsdir}/TEMPMAFfiles/tempMuTect2", exist_ok = True)
+>>>>>>> origin/master
 
     # Running MTvariantpipeline without matched normal
     print("Running MTvariantpipeline..")
@@ -116,7 +120,16 @@ def variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,mi
     # Convert the MuTect2 result from vcf to maf file
     subprocess.run(f"perl {workingdir}/vcf2maf/vcf2maf.pl --species {species} --vep-data {vepcache} " +
         f"--ncbi-build {ncbibuild} --vep-overwrite --input-vcf {resultsdir}/MuTect2_results/{tumor_id}.bam.vcf " + 
+<<<<<<< HEAD
         f"--output-maf {resultsdir}/MuTect2_results/{tumor_id}.bam.maf --ref-fasta {reffile}", shell=True, check=True)
+=======
+        f"--output-maf {resultsdir}/MuTect2_results/{tumor_id}_temp.bam.maf --ref-fasta {reffile}", shell=True, check=True)
+
+    tumorfile = pd.read_csv(resultsdir + "/MuTect2_results/" + tumor_id + "_temp.bam.maf", sep = "\t", header = 1, low_memory = False)
+    tumorfile = tumorfile[['Chromosome','Start_Position',
+        'Reference_Allele','Tumor_Seq_Allele2','Variant_Classification','Variant_Type']]
+    tumorfile.to_csv(f"{resultsdir}/MuTect2_results/{tumor_id}.bam.maf", sep = "\t", na_rep = "NA", index = False)
+>>>>>>> origin/master
 
 def variant_processing(tumor_id,resultsdir):
     """
@@ -203,4 +216,8 @@ if __name__ == "__main__":
         variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,minstrand,workingdir,vepcache,mtchrom,ncbibuild,species)
     variant_processing(tumor_id,resultsdir)
     make_mutsig.create_mut_sig_file(resultsdir, tumor_id)
+<<<<<<< HEAD
     print(f"DONE WITH BULKPIPELINE: {tumor_id}")
+=======
+    print(f"DONE WITH BULKPIPELINE: {tumor_id}")
+>>>>>>> origin/master

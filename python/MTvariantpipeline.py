@@ -62,7 +62,11 @@ def process_tempmaf(vcfdir, tumorbam, normalbam, molecule, minstrand):
         tempmaf.drop(columns = ["N_Allelic_Depth", "N_ForwardDepth", "N_ReverseDepth"], inplace = True)
 
     else:
+<<<<<<< HEAD
         tempmaf.columns = ["Chromosome", "Start_Position", "Reference_Allele", "Tumor_Seq_Allele2", "Allelic_Depth", "t_depth", "T_ForwardDepth", "T_ReverseDepth"]
+=======
+        tempmaf.columns = ["Chromosome", "Start_Position", "Reference_Allele", "Tumor_Seq_Allele2", "T_Allelic_Depth", "t_depth", "T_ForwardDepth", "T_ReverseDepth"]
+>>>>>>> origin/master
         tempmaf["Normal_Sample_Barcode"] = ""
 
     tempmaf["Tumor_Sample_Barcode"] = tumorbam[:-4]

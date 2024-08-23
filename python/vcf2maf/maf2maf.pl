@@ -21,9 +21,13 @@ my ( $species, $ncbi_build, $cache_version, $maf_center, $max_subpop_af ) = ( "h
 my $perl_bin = $Config{perlpath};
 
 # Columns that can be safely borrowed from the input MAF
+<<<<<<< HEAD
 my $retain_cols = "Center,Verification_Status,Validation_Status,Mutation_Status,Sequencing_Phase" .
     ",Sequence_Source,Validation_Method,Score,BAM_file,Sequencer,Tumor_Sample_UUID" .
     ",Matched_Norm_Sample_UUID";
+=======
+my $retain_cols = "";
+>>>>>>> origin/master
 
 # Columns that should never be overridden since they are results of re-annotation
 my %force_new_cols = map{ my $c = lc; ( $c, 1 )} qw( Hugo_Symbol Entrez_Gene_Id NCBI_Build
