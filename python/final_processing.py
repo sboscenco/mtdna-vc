@@ -8,15 +8,9 @@ import subprocess
 def process_indelmaf(outdir, tumorbam, normalbam):
     #name cols
     maf = pd.read_csv(outdir + "/" + tumorbam + '.maf',header = 0,sep = '\t',comment = '#')
-
     if(normalbam != ""):
-        maf["Normal_Sample_Barcode"] = normalbam[:-4]
+        maf['N_AltFwd'] = np.nan
         maf['N_AltRev'] = np.nan
-        maf['N_AltRev'] = np.nan
-    else:
-        maf["Normal_Sample_Barcode"] = ""
-
-    maf["Tumor_Sample_Barcode"] = tumorbam[:-4]
 
     maf['T_RefFwd'] = np.nan
     maf['T_AltFwd'] = np.nan
@@ -81,7 +75,7 @@ def process_maf(outdir, workingdir, tumorbam, normalbam, indel = False):
     # write out final files
 
     if(indel):
-         maf.to_csv(outdir + "/" + tumorbam + '_indel.bam.maf', index = None, sep = '\t')
+         maf.to_csv(outdir + "/" + tumorbam[:-13] + 'indel.bam.maf', index = None, sep = '\t')
     else:
          maf.to_csv(outdir + "/" + tumorbam + '.maf', index = None, sep = '\t')
     
