@@ -123,7 +123,7 @@ def variant_calling_normal(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,m
     merge_normal_tumor_snps(resultsdir, tumor_id, normal_id)
     merge_normal_tumor_indels(resultsdir, tumor_id, normal_id)
     final_processing.process_indelmaf(resultsdir + "/MuTect2_results/", tumor_id + '_tempindel.bam', normal_id)
-    final_processing.process_maf(resultsdir + "/MuTect2_results/", workingdir,  tumor_id + '_tempindel2.bam', normal_id, True)
+    final_processing.process_maf(resultsdir + "/MuTect2_results/", workingdir,  tumor_id + '_tempindel.bam', normal_id, True)
 
 def variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,minstrand,workingdir,vepcache,mtchrom,species):
 
@@ -169,7 +169,7 @@ def variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,mi
     tumorfile_indel.to_csv(f"{resultsdir}/MuTect2_results/{tumor_id}_tempindel.bam.maf", sep = "\t", na_rep = "NA", index = False)
 
     final_processing.process_indelmaf(resultsdir + "/MuTect2_results/", tumor_id + '_tempindel.bam', "")
-    final_processing.process_maf(resultsdir + "/MuTect2_results/", workingdir, tumor_id + '_tempindel2.bam', "", indel = True)
+    final_processing.process_maf(resultsdir + "/MuTect2_results/", workingdir, tumor_id + '_tempindel.bam', "", indel = True)
 
 def variant_processing(tumor_id,resultsdir):
     """
