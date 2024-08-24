@@ -52,7 +52,7 @@ def merge_normal_tumor_snps(resultsdir, tumor_id, normal_id):
     combinedfile = df_merged_outer[df_merged_outer['_merge'] == 'left_only'].drop(columns='_merge')
    
     # Combined matrices together
-    combinedfile.to_csv(f"{resultsdir}/MuTect2_results/{tumor_id}_snp.bam.maf",sep = '\t',na_rep='NA',index=False)
+    combinedfile.to_csv(f"{resultsdir}/MuTect2_results/{tumor_id}_snp.bam.maf",sep = '\t',na_rep='NA',index=False)   
 
 
 def merge_normal_tumor_indels(resultsdir, tumor_id, normal_id):
@@ -98,11 +98,11 @@ def variant_calling_normal(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,m
         f"-tumor {normal_id.replace('-','_')} -O {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}.bam.vcf.gz", shell=True, check=True)
     
     #Filter MuTect2 results
-    subprocess.run(f"gatk --java-options -Xmx4g FilterMutectCalls -R {reffile} --mitochondria-mode true -L {mtchrom} " +
+    subprocess.run(f"gatk --java-options -Xmx4g FilterMutectCalls -R {reffile} --min-reads-per-strand 2 --mitochondria-mode true -L {mtchrom} " +
         f"-V {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.vcf.gz " +
         f"-O {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}_filtered.bam.vcf.gz", shell=True, check=True)
     
-    subprocess.run(f"gatk --java-options -Xmx4g FilterMutectCalls -R {reffile} --mitochondria-mode true -L {mtchrom} " +
+    subprocess.run(f"gatk --java-options -Xmx4g FilterMutectCalls -R {reffile} --min-reads-per-strand 2 --mitochondria-mode true -L {mtchrom} " +
         f"-V {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}.bam.vcf.gz " +
         f"-O {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}_filtered.bam.vcf.gz", shell=True, check=True)
 
@@ -122,7 +122,8 @@ def variant_calling_normal(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,m
     
     merge_normal_tumor_snps(resultsdir, tumor_id, normal_id)
     merge_normal_tumor_indels(resultsdir, tumor_id, normal_id)
-    final_processing.process_maf(resultsdir + "/MuTect2_results/", workingdir,  tumor_id + '_tempindel.bam', normal_id, True)
+    final_processing.process_indelmaf(resultsdir + "/MuTect2_results/", tumor_id + '_tempindel.bam', normal_id)
+    final_processing.process_maf(resultsdir + "/MuTect2_results/", workingdir,  tumor_id + '_tempindel2.bam', normal_id, True)
 
 def variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,minstrand,workingdir,vepcache,mtchrom,species):
 
@@ -143,7 +144,7 @@ def variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,mi
         f"-tumor {tumor_id.replace('-','_')} -O {resultsdir}/MuTect2_results/{tumor_id}.bam.vcf.gz", shell=True, check=True)
     
     #Filter MuTect2 results
-    subprocess.run(f"gatk --java-options -Xmx4g FilterMutectCalls -R {reffile} --mitochondria-mode true -L {mtchrom} " +
+    subprocess.run(f"gatk --java-options -Xmx4g FilterMutectCalls -R {reffile} --min-reads-per-strand 2 --mitochondria-mode true -L {mtchrom} " +
         f"-V {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.vcf.gz " +
         f"-O {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}_filtered.bam.vcf.gz", shell=True, check=True)
 
@@ -167,7 +168,8 @@ def variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,mi
     tumorfile_snp.to_csv(f"{resultsdir}/MuTect2_results/{tumor_id}.bam.maf", sep = "\t", na_rep = "NA", index = False)
     tumorfile_indel.to_csv(f"{resultsdir}/MuTect2_results/{tumor_id}_tempindel.bam.maf", sep = "\t", na_rep = "NA", index = False)
 
-    final_processing.process_maf(resultsdir + "/MuTect2_results/", workingdir, tumor_id + '_tempindel.bam', "", indel = True)
+    final_processing.process_indelmaf(resultsdir + "/MuTect2_results/", tumor_id + '_tempindel.bam', "")
+    final_processing.process_maf(resultsdir + "/MuTect2_results/", workingdir, tumor_id + '_tempindel2.bam', "", indel = True)
 
 def variant_processing(tumor_id,resultsdir):
     """

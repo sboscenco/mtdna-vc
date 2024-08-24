@@ -5,6 +5,29 @@ import argparse
 import pysam
 import subprocess
 
+def process_indelmaf(outdir, tumorbam, normalbam):
+    #name cols
+    maf = pd.read_csv(outdir + "/" + tumorbam + '.maf',header = 0,sep = '\t',comment = '#')
+
+    if(normalbam != ""):
+        maf["Normal_Sample_Barcode"] = normalbam[:-4]
+        maf['N_AltRev'] = np.nan
+        maf['N_AltRev'] = np.nan
+    else:
+        maf["Normal_Sample_Barcode"] = ""
+
+    maf["Tumor_Sample_Barcode"] = tumorbam[:-4]
+
+    maf['T_RefFwd'] = np.nan
+    maf['T_AltFwd'] = np.nan
+    maf['T_AltRev'] = np.nan
+    maf['T_RefRev'] = np.nan   
+
+    maf = maf[~maf['Start_Position'].isin(list(range(3106, 3107)))]
+
+    # secondary tempoary maf file
+    maf.to_csv(outdir + tumorbam + "_tempindel2.maf",index = None,sep = '\t')
+
 def process_maf(outdir, workingdir, tumorbam, normalbam, indel = False):
    
     # Read in files
