@@ -121,6 +121,7 @@ def variant_calling_normal(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,m
         f"--output-maf {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}.bam.maf --ref-fasta {reffile}", shell=True, check=True)
     
     merge_normal_tumor_snps(resultsdir, tumor_id, normal_id)
+    merge_normal_tumor_indels(resultsdir, tumor_id, normal_id)
     final_processing.process_maf(resultsdir + "/MuTect2_results/", workingdir,  tumor_id + '_tempindel.bam', normal_id, True)
 
 def variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,minstrand,workingdir,vepcache,mtchrom,species):
