@@ -26,7 +26,7 @@ def process_indelmaf(outdir, tumorbam, normalbam):
     maf = maf[~maf['Start_Position'].isin(list(range(3106, 3107)))]
 
     # secondary tempoary maf file
-    maf.to_csv(outdir + tumorbam + "_tempindel2.maf",index = None,sep = '\t')
+    maf.to_csv(outdir + tumorbam + "2.maf",index = None,sep = '\t')
 
 def process_maf(outdir, workingdir, tumorbam, normalbam, indel = False):
    
