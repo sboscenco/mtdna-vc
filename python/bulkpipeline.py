@@ -48,20 +48,26 @@ def merge_normal_tumor_snps(resultsdir, tumor_id, normal_id):
     # keep only vars that are not in the normal 
     df_merged_outer = pd.merge(tumorfile[['Chromosome','Start_Position',
         'Reference_Allele','Tumor_Seq_Allele2','Variant_Classification','Variant_Type']], normalfile[['Chromosome','Start_Position',
-        'Reference_Allele','Tumor_Seq_Allele2','Variant_Classification','Variant_Type']], how='left')
-    #combinedfile = df_merged_outer[df_merged_outer['_merge'] == 'left_only'].drop(columns='_merge')
+        'Reference_Allele','Tumor_Seq_Allele2','Variant_Classification','Variant_Type']], how='outer', indicator = True)
+    combinedfile = df_merged_outer[df_merged_outer['_merge'] == 'left_only'].drop(columns='_merge')
    
     # Combined matrices together
-    df_merged_outer.to_csv(f"{resultsdir}/MuTect2_results/{tumor_id}_snp.bam.maf",sep = '\t',na_rep='NA',index=False)   
+    combinedfile.to_csv(f"{resultsdir}/MuTect2_results/{tumor_id}_snp.bam.maf",sep = '\t',na_rep='NA',index=False)   
 
 
 def merge_normal_tumor_indels(resultsdir, tumor_id, normal_id):
     tumorfile = pd.read_csv(resultsdir + "/TEMPMAFfiles/tempMuTect2/" + tumor_id + ".bam.maf", sep = "\t", header=1, low_memory=False)
     normalfile = pd.read_csv(resultsdir + "/TEMPMAFfiles/tempMuTect2/" + normal_id + ".bam.maf", sep = "\t", header=1, low_memory=False)
+    temp_norm = pd.read_csv(resultsdir + "/TEMPMAFfiles/" + tumor_id + ".bam_temp.maf", sep = "\t", header=1, low_memory=False)
+    temp_norm.columns = ["Chromosome", "Start_Position", "Reference_Allele", "Tumor_Seq_Allele2", "T_Allelic_Depth", "t_depth", "T_ForwardDepth", "T_ReverseDepth",
+                          "N_Allelic_Depth", "n_depth_temp", "N_ForwardDepth", "N_ReverseDepth"]
+    
+    # split up ref and alt reads 
+    temp_norm[['n_ref_count_temp', 'n_alt_count_temp']] = temp_norm['N_Allelic_Depth'].str.split(',', expand=True)
     
     normalfile = normalfile[['Chromosome','Start_Position',
-        'Reference_Allele','Tumor_Seq_Allele2','Variant_Classification','Variant_Type', "t_depth", "t_ref_count", "t_alt_count"]]
-    normalfile.rename(columns = {"t_depth": "n_depth", "t_ref_count": "n_ref_count", "t_alt_count": "n_alt_count"}, 
+        'Reference_Allele','Tumor_Seq_Allele2','Variant_Classification','Variant_Type', "t_depth", "t_ref_count", "t_alt_count", "t_F1R2", "t_F2R1"]]
+    normalfile.rename(columns = {"t_depth": "n_depth", "t_ref_count": "n_ref_count", "t_alt_count": "n_alt_count", "t_F1R2": "N_F1R2", "t_F2R1": "N_F2R1"}, 
                 inplace = True, errors = "ignore")
     
     normalfile["Normal_Sample_Barcode"] = normal_id
@@ -75,14 +81,25 @@ def merge_normal_tumor_indels(resultsdir, tumor_id, normal_id):
     df_merged_outer = pd.merge(tumorfile[['Chromosome','Start_Position', 'End_Position', 'NCBI_Build', 'Strand', 'Tumor_Sample_Barcode', 
                                           'Match_Norm_Seq_Allele1', 'Match_Norm_Seq_Allele2', 
         'Reference_Allele','Tumor_Seq_Allele2','Variant_Classification','Variant_Type', "t_depth", "t_ref_count", "t_alt_count",
-        'Gene', 'Consequence', 'HGVSc', 'HGVSp', 'HGVSp_Short', 'flanking_bps']], normalfile[['Chromosome','Start_Position',
-        'Reference_Allele','Tumor_Seq_Allele2','Variant_Classification','Variant_Type', "n_depth", "n_ref_count", "n_alt_count", "Normal_Sample_Barcode"]], 
+        'Gene', 'Consequence', 'HGVSc', 'HGVSp', 'HGVSp_Short', 'flanking_bps', "t_F1R2", "t_F2R1"]], normalfile[['Chromosome','Start_Position',
+        'Reference_Allele','Tumor_Seq_Allele2','Variant_Classification','Variant_Type', "n_depth", "n_ref_count", "n_alt_count", "Normal_Sample_Barcode", "N_F1R2", "N_F2R1"]], 
         on=['Chromosome', 'Start_Position', 'Reference_Allele', 'Tumor_Seq_Allele2', 'Variant_Classification', 'Variant_Type'],
-        how='left')
+        how='outer', indicator = True)
     
+    combinedfile = df_merged_outer[df_merged_outer['_merge'] == 'left_only'].drop(columns='_merge')
+    merged_df = pd.merge(combinedfile, temp_norm[['Chromosome', "Reference_Allele", 'Start_Position', 'n_depth_temp', 'n_ref_count_temp', 'n_alt_count_temp']], 
+                                      on=['Chromosome', "Reference_Allele", 'Start_Position'], how='left')
+    
+    combinedfile['n_depth'] = np.where(combinedfile['n_depth'].isna(), merged_df['n_depth_temp'], combinedfile['n_depth'])
+    combinedfile['n_ref_count'] = np.where(combinedfile['n_ref_count'].isna(), merged_df['n_ref_count_temp'], combinedfile['n_ref_count'])
+    combinedfile['n_alt_count'] = np.where(combinedfile['n_alt_count'].isna(), merged_df['n_alt_count_temp'], combinedfile['n_alt_count'])
+    #combinedfile['n_ref_count'] = merged_df['n_ref_count'].combine_first(merged_df['n_ref_count_temp'])
+    #combinedfile['n_alt_count'] = merged_df['n_alt_count'].combine_first(merged_df['n_alt_count_temp'])
+    combinedfile["Normal_Sample_Barcode"] = normal_id
+
     #combinedfile = df_merged_outer[df_merged_outer['_merge'] == 'left_only'].drop(columns='_merge')
     # Combined matrices together
-    df_merged_outer.to_csv(f"{resultsdir}/MuTect2_results/{tumor_id}_tempindel.bam.maf",sep = '\t',na_rep='NA',index=False)
+    combinedfile.to_csv(f"{resultsdir}/MuTect2_results/{tumor_id}_tempindel.bam.maf",sep = '\t',na_rep='NA',index=False)
 
 def variant_calling_normal(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,minstrand,workingdir,vepcache,mtchrom,species,normal_id,normaldir):
     os.makedirs(f"{resultsdir}/TEMPMAFfiles/tempMuTect2", exist_ok = True)
@@ -98,21 +115,21 @@ def variant_calling_normal(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,m
     # MuTect2 mitochondrial mode on tumor
     print("Running MuTect2 on tumor..")
     subprocess.run(f"gatk --java-options -Xmx4g Mutect2 -R {reffile} --mitochondria-mode true -L {mtchrom} " +
-        f"-mbq {minbq} --minimum-mapping-quality {minmapq} --pcr-indel-model AGGRESSIVE --QUIET -I {tumordir}/{tumor_id}.bam " +
+        f"-mbq {minbq} --minimum-mapping-quality {minmapq} --pcr-indel-model AGGRESSIVE --QUIET true -I {tumordir}/{tumor_id}.bam " +
         f"-tumor {tumor_id.replace('-','_')} -O {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.vcf.gz", shell=True, check=True)
 
     # MuTect2 mitochondrial mode on normal
     print("Running MuTect2 on normal..")
     subprocess.run(f"gatk --java-options -Xmx4g Mutect2 -R {reffile} --mitochondria-mode true -L {mtchrom} " +
-        f"-mbq {minbq} --minimum-mapping-quality {minmapq} --pcr-indel-model AGGRESSIVE --QUIET -I {normaldir}/{normal_id}.bam " +
+        f"-mbq {minbq} --minimum-mapping-quality {minmapq} --force-active true --QUIET true -I {normaldir}/{normal_id}.bam " +
         f"-tumor {normal_id.replace('-','_')} -O {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}.bam.vcf.gz", shell=True, check=True)
     
     #Filter MuTect2 results
-    subprocess.run(f"gatk --java-options -Xmx4g FilterMutectCalls -R {reffile} --min-reads-per-strand 2 --mitochondria-mode true -L {mtchrom} " +
+    subprocess.run(f"gatk --java-options -Xmx4g FilterMutectCalls -R {reffile} --mitochondria-mode true --QUIET true -L {mtchrom} " +
         f"-V {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.vcf.gz " +
         f"-O {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}_filtered.bam.vcf.gz", shell=True, check=True)
     
-    subprocess.run(f"gatk --java-options -Xmx4g FilterMutectCalls -R {reffile} --min-reads-per-strand 2 --mitochondria-mode true -L {mtchrom} " +
+    subprocess.run(f"gatk --java-options -Xmx4g FilterMutectCalls -R {reffile} --mitochondria-mode true --QUIET true -L {mtchrom} " +
         f"-V {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}.bam.vcf.gz " +
         f"-O {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}_filtered.bam.vcf.gz", shell=True, check=True)
 
@@ -125,10 +142,10 @@ def variant_calling_normal(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,m
     # Convert the MuTect2 result from vcf to maf file
     subprocess.run(f"perl {workingdir}/vcf2maf/vcf2maf.pl --species {species} --vep-data {vepcache} " +
         f"--ncbi-build {genome} --tumor-id {tumor_id.replace('-','_')} --vep-overwrite --input-vcf {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.vcf " +
-        f"--output-maf {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.maf --ref-fasta {reffile}", shell=True, check=True)
+        f"--retain-fmt F1R2,F2R1 --output-maf {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.maf --ref-fasta {reffile}", shell=True, check=True)
     subprocess.run(f"perl {workingdir}/vcf2maf/vcf2maf.pl --species {species} --vep-data {vepcache} " +
         f"--ncbi-build {genome} --tumor-id {normal_id.replace('-','_')} --vep-overwrite --input-vcf {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}.bam.vcf " + 
-        f"--output-maf {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}.bam.maf --ref-fasta {reffile}", shell=True, check=True)
+        f"--retain-fmt F1R2,F2R1 --output-maf {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}.bam.maf --ref-fasta {reffile}", shell=True, check=True)
     
     merge_normal_tumor_snps(resultsdir, tumor_id, normal_id)
     merge_normal_tumor_indels(resultsdir, tumor_id, normal_id)

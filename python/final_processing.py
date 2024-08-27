@@ -12,11 +12,13 @@ def process_indelmaf(outdir, tumorbam, normalbam):
         maf['N_AltFwd'] = np.nan
         maf['N_AltRev'] = np.nan
 
-    maf['T_RefFwd'] = np.nan
-    maf['T_AltFwd'] = np.nan
-    maf['T_AltRev'] = np.nan
-    maf['T_RefRev'] = np.nan   
+    print(maf['t_F1R2'])
 
+    maf['t_F1R2'] = maf['t_F1R2'].fillna(0)
+    maf['t_F2R1'] = maf['t_F2R1'].fillna(0)
+    maf[['T_RefFwd', 'T_AltFwd']] = maf['t_F1R2'].str.split(',', expand=True)
+    maf[['T_RefRev', 'T_AltRev']] = maf['t_F2R1'].str.split(',', expand=True)
+    
     maf = maf[~maf['Start_Position'].isin(list(range(3106, 3107)))]
 
     # secondary tempoary maf file
@@ -28,7 +30,7 @@ def process_maf(outdir, workingdir, tumorbam, normalbam, indel = False):
     maf = pd.read_csv(outdir + "/" + tumorbam + '.maf',header = 0,sep = '\t',comment = '#')
     genepos = pd.read_csv(workingdir + '/reference/GenePositions_imported.csv', header = 0, index_col = 0)
     mitotip = pd.read_csv(workingdir + '/reference/All_combinations.csv', header = 0, sep = ",")
-    apogee2 = pd.read_csv(workingdir + '/reference/MitImpact_db_3.1.2.txt', header = 0, sep = "\t")
+    apogee2 = pd.read_csv(workingdir + '/reference/MitImpact_db_3.1.2.txt', header = 0, sep = "\t", low_memory = False)
 
     maf.rename(columns = {"t_depth": "T_TotalDepth", "n_depth": "N_TotalDepth", "t_ref_count": "T_RefCount", "t_alt_count": "T_AltCount",
                           "n_ref_count": "N_RefCount", "n_alt_count": "N_AltCount"}, inplace = True, errors = "ignore")
@@ -36,6 +38,7 @@ def process_maf(outdir, workingdir, tumorbam, normalbam, indel = False):
     # modify the gene names to include rRNA and tRNA and change the control region symbols
     maf['Hugo_Symbol'] = genepos.loc[maf['Start_Position'],'Gene'].reset_index(drop = True)
     maf.loc[(maf['Start_Position'].map(int) <= 576) | (maf['Start_Position'].map(int) >= 16024),'Hugo_Symbol'] = 'ControlRegion'
+    maf.loc[(maf['Start_Position'].map(int) <= 5798) | (maf['Start_Position'].map(int) >= 5721),'Hugo_Symbol'] = 'MT-OLR'
     
     list_cols = ["Hugo_Symbol", "Chromosome", "NCBI_Build", "Start_Position", "End_Position", "Strand", "Variant_Classification", "Variant_Type", "Reference_Allele", 
                "Tumor_Seq_Allele2", "Tumor_Sample_Barcode", "Normal_Sample_Barcode", "Match_Norm_Seq_Allele1", "Match_Norm_Seq_Allele2", "Gene",
@@ -53,9 +56,18 @@ def process_maf(outdir, workingdir, tumorbam, normalbam, indel = False):
     maf['TumorVAF'] = maf['T_AltCount']/maf['T_TotalDepth']
     if("N_TotalDepth" in maf.columns):
         maf['NormalVAF'] = maf['N_AltCount']/maf['N_TotalDepth']
+        maf["N_TotalDepth"] = maf["N_TotalDepth"].fillna(0)
+        maf['NormalVAF'] = maf['NormalVAF'].fillna(0)
+        maf["N_AltCount"] = maf["N_AltCount"].fillna(0)
+        maf["N_RefCount"] = maf["N_RefCount"].fillna(0)
+
+        # Filter any likely germline (normalVAF > 50%)
+        maf = maf[(maf['N_TotalDepth'] > 5) & (maf['NormalVAF'] > 0.5)]
     else:
         maf['NormalVAF'] = 'NA'
 
+    # Fill all depths with zero 
+    
     # add mitotip pathogenicity
     mitotip.columns = ["Start_Position", "Reference_Allele", "Tumor_Seq_Allele2", "MitoTIP_Score"] 
     apogee2 = apogee2[["Start", "Ref", "Alt", "APOGEE2", "Respiratory_Chain_complex", "HelixMTdb_AF_hom", "HelixMTdb_AF_het"]]
