@@ -12,8 +12,6 @@ def process_indelmaf(outdir, tumorbam, normalbam):
         maf['N_AltFwd'] = np.nan
         maf['N_AltRev'] = np.nan
 
-    print(maf['t_F1R2'])
-
     maf['t_F1R2'] = maf['t_F1R2'].fillna(0)
     maf['t_F2R1'] = maf['t_F2R1'].fillna(0)
     maf[['T_RefFwd', 'T_AltFwd']] = maf['t_F1R2'].str.split(',', expand=True)
@@ -38,7 +36,7 @@ def process_maf(outdir, workingdir, tumorbam, normalbam, indel = False):
     # modify the gene names to include rRNA and tRNA and change the control region symbols
     maf['Hugo_Symbol'] = genepos.loc[maf['Start_Position'],'Gene'].reset_index(drop = True)
     maf.loc[(maf['Start_Position'].map(int) <= 576) | (maf['Start_Position'].map(int) >= 16024),'Hugo_Symbol'] = 'ControlRegion'
-    maf.loc[(maf['Start_Position'].map(int) <= 5798) | (maf['Start_Position'].map(int) >= 5721),'Hugo_Symbol'] = 'MT-OLR'
+    maf.loc[(maf['Start_Position'].map(int) <= 5798) & (maf['Start_Position'].map(int) >= 5721),'Hugo_Symbol'] = 'MT-OLR'
     
     list_cols = ["Hugo_Symbol", "Chromosome", "NCBI_Build", "Start_Position", "End_Position", "Strand", "Variant_Classification", "Variant_Type", "Reference_Allele", 
                "Tumor_Seq_Allele2", "Tumor_Sample_Barcode", "Normal_Sample_Barcode", "Match_Norm_Seq_Allele1", "Match_Norm_Seq_Allele2", "Gene",
@@ -62,7 +60,7 @@ def process_maf(outdir, workingdir, tumorbam, normalbam, indel = False):
         maf["N_RefCount"] = maf["N_RefCount"].fillna(0)
 
         # Filter any likely germline (normalVAF > 50%)
-        maf = maf[(maf['N_TotalDepth'] > 5) & (maf['NormalVAF'] > 0.5)]
+        #maf = maf[(maf['N_TotalDepth'] > 5) & (maf['NormalVAF'] > 0.5)]
     else:
         maf['NormalVAF'] = 'NA'
 
@@ -79,6 +77,7 @@ def process_maf(outdir, workingdir, tumorbam, normalbam, indel = False):
    
     # mitotip pathogeneicity annotations based on scores 
     maf["MitoTIP"] = "unknown"
+    maf["MitoTIP"] = maf["MitoTIP"].astype(object)
     maf.loc[maf["MitoTIP_Score"] > 16.25, "MitoTIP"] = "likely_pathogenic"
     maf.loc[(maf["MitoTIP_Score"] > 12.66) & (maf["MitoTIP_Score"] <= 16.25), "MitoTIP"] = "possibly_pathogenic"
     maf.loc[(maf["MitoTIP_Score"] > 8.44) & (maf["MitoTIP_Score"] <= 12.66), "MitoTIP"] = "possibly_benign"
