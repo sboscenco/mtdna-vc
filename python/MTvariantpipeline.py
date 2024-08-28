@@ -10,7 +10,6 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 import re
 
-## For calling snps   
 def call_vars_normal(tumorbam, normalbam, mtchrom, minmapq, minbq, fasta, datadir, normaldir, vcfdir, ncbibuild):
     subprocess.run(f"bcftools mpileup --region {mtchrom} --count-orphans --no-BAQ --min-MQ {minmapq} --min-BQ {minbq} " \
                 + "--ignore-RG --skip-any-set UNMAP,SECONDARY,QCFAIL,DUP --annotate DP,AD,ADF,ADR --gap-frac 0.005 " \
@@ -38,7 +37,6 @@ def maf_call(tumorbam, fasta, vcfdir, workingdir, ncbibuild, vepcache, outdir):
                 + f"--output-maf {outdir}/{tumorbam}.maf --retain-cols {retaincols} --ncbi-build {ncbibuild} --ref-fasta {fasta}", shell = True, check = True)
     print(f'Done with MAF call for {tumorbam}')
     
-
 def process_tempmaf(vcfdir, tumorbam, normalbam, molecule, minstrand):
     #name cols
     tempmaf = pd.read_csv(vcfdir + tumorbam + "_temp.maf",header = None,sep = '\t')
@@ -62,30 +60,21 @@ def process_tempmaf(vcfdir, tumorbam, normalbam, molecule, minstrand):
         tempmaf["Normal_Sample_Barcode"] = ""
 
     tempmaf["Tumor_Sample_Barcode"] = tumorbam[:-4]
-
     tempmaf[['t_ref_count', 't_alt_count']] = tempmaf['T_Allelic_Depth'].str.split(',', expand=True)
     tempmaf[['T_RefFwd', 'T_AltFwd']] = tempmaf['T_ForwardDepth'].str.split(',', expand=True)
     tempmaf[['T_RefRev', 'T_AltRev']] = tempmaf['T_ReverseDepth'].str.split(',', expand=True)
     tempmaf.drop(columns = ["T_Allelic_Depth", "T_ForwardDepth", "T_ReverseDepth"], inplace = True)
    
    #make sure enough reads supporting both forward and reverse 
-   #check the rna condition!
     if molecule == 'dna':
         tempmaf = tempmaf[ (tempmaf['T_AltFwd'].map(int) >= minstrand) & (tempmaf['T_AltRev'].map(int) >= minstrand) ]
     elif molecule == 'rna':
         tempmaf = tempmaf[ (tempmaf['T_AltFwd'].map(int) >= minstrand) | (tempmaf['T_AltRev'].map(int) >= minstrand) ]
 
     tempmaf = tempmaf[~tempmaf['Start_Position'].isin(list(range(3106, 3107)))]
-
-    # secondary tempoary maf file
     tempmaf.to_csv(vcfdir + tumorbam + "_temp2.maf",index = None,sep = '\t')
    
-
 def variant_calling(datadir, tumorbam, normalbam, normaldir, vcfdir, outdir, workingdir, vepcache, fasta, minmapq, minbq, minstrand, genome, mtchrom, molecule):
-    '''
-    Variant calling
-    '''
-    print("Starting variant calling...")
 
     # need to test on mm10 still not sure if it will work 
     if(normalbam != ""): 

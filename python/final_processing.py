@@ -6,7 +6,6 @@ import pysam
 import subprocess
 
 def process_indelmaf(outdir, tumorbam, normalbam):
-    #name cols
     maf = pd.read_csv(outdir + "/" + tumorbam + '.maf',header = 0,sep = '\t',comment = '#')
     if(normalbam != ""):
         maf['N_AltFwd'] = np.nan
@@ -18,8 +17,6 @@ def process_indelmaf(outdir, tumorbam, normalbam):
     maf[['T_RefRev', 'T_AltRev']] = maf['t_F2R1'].str.split(',', expand=True)
     
     maf = maf[~maf['Start_Position'].isin(list(range(3106, 3107)))]
-
-    # secondary tempoary maf file
     maf.to_csv(outdir + tumorbam + ".maf",index = None,sep = '\t')
 
 def process_maf(outdir, workingdir, tumorbam, normalbam, indel = False):
@@ -59,13 +56,13 @@ def process_maf(outdir, workingdir, tumorbam, normalbam, indel = False):
         maf["N_AltCount"] = maf["N_AltCount"].fillna(0)
         maf["N_RefCount"] = maf["N_RefCount"].fillna(0)
 
-        # Filter any likely germline (normalVAF > 50%)
-        #maf = maf[(maf['N_TotalDepth'] > 5) & (maf['NormalVAF'] > 0.5)]
+        # FILTER GERMLINE VAFS
+        germline_vars = (maf["N_TotalDepth"] >= 5) & (maf["NormalVAF"] >= 0.5)
+        maf = maf[~germline_vars]
+        
     else:
-        maf['NormalVAF'] = 'NA'
+        maf['NormalVAF'] = np.nan
 
-    # Fill all depths with zero 
-    
     # add mitotip pathogenicity
     mitotip.columns = ["Start_Position", "Reference_Allele", "Tumor_Seq_Allele2", "MitoTIP_Score"] 
     apogee2 = apogee2[["Start", "Ref", "Alt", "APOGEE2", "Respiratory_Chain_complex", "HelixMTdb_AF_hom", "HelixMTdb_AF_het"]]
@@ -84,7 +81,6 @@ def process_maf(outdir, workingdir, tumorbam, normalbam, indel = False):
     maf.loc[maf["MitoTIP_Score"] <= 8.44] = "likely_benign"
 
     # write out final files
-
     if(indel):
          maf.to_csv(outdir + "/" + tumorbam[:-13] + 'indel.bam.maf', index = None, sep = '\t')
     else:
