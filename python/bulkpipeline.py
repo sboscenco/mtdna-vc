@@ -114,13 +114,13 @@ def variant_calling_normal(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,m
     print("Running MuTect2 on tumor..")
     subprocess.run(f"gatk --java-options -Xmx4g Mutect2 -R {reffile} --mitochondria-mode true -L {mtchrom} " +
         f"-mbq {minbq} --minimum-mapping-quality {minmapq} --pcr-indel-model AGGRESSIVE --QUIET true -I {tumordir}/{tumor_id}.bam " +
-        f"-tumor {tumor_id.replace('-','_')} -O {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.vcf.gz", shell=True, check=True)
+        f"-tumor {tumor_id} -O {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.vcf.gz", shell=True, check=True)
 
     # MuTect2 mitochondrial mode on normal
     print("Running MuTect2 on normal..")
     subprocess.run(f"gatk --java-options -Xmx4g Mutect2 -R {reffile} --mitochondria-mode true -L {mtchrom} " +
         f"-mbq {minbq} --minimum-mapping-quality {minmapq} --force-active true --QUIET true -I {normaldir}/{normal_id}.bam " +
-        f"-tumor {normal_id.replace('-','_')} -O {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}.bam.vcf.gz", shell=True, check=True)
+        f"-tumor {normal_id} -O {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}.bam.vcf.gz", shell=True, check=True)
     
     #Filter MuTect2 results
     subprocess.run(f"gatk --java-options -Xmx4g FilterMutectCalls -R {reffile} --mitochondria-mode true --min-reads-per-strand 2 --QUIET true -L {mtchrom} " +
@@ -137,12 +137,19 @@ def variant_calling_normal(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,m
     subprocess.run(f"bcftools norm -m - -f {reffile} {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}.bam.vcf.gz " +
         f"-o {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}.bam.vcf", shell=True, check=True)
     
+    # Ensure correct naming of VCF files
+    subprocess.run(f"java -jar {workingdir}/picard.jar RenameSampleInVcf -I {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.vcf " +
+                   f"-O {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}_renamed.bam.vcf --NEW_SAMPLE_NAME {tumor_id}", shell = True, check = True)
+    
+    subprocess.run(f"java -jar {workingdir}/picard.jar RenameSampleInVcf -I {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}.bam.vcf " +
+                   f"-O {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}_renamed.bam.vcf --NEW_SAMPLE_NAME {normal_id}", shell = True, check = True)
+    
     # Convert the MuTect2 result from vcf to maf file
     subprocess.run(f"perl {workingdir}/vcf2maf/vcf2maf.pl --species {species} --vep-data {vepcache} " +
-        f"--ncbi-build {genome} --tumor-id {tumor_id.replace('-','_')} --vep-overwrite --input-vcf {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.vcf " +
+        f"--ncbi-build {genome} --tumor-id {tumor_id} --vep-overwrite --input-vcf {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}_renamed.bam.vcf " +
         f"--retain-fmt F1R2,F2R1 --output-maf {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.maf --ref-fasta {reffile}", shell=True, check=True)
     subprocess.run(f"perl {workingdir}/vcf2maf/vcf2maf.pl --species {species} --vep-data {vepcache} " +
-        f"--ncbi-build {genome} --tumor-id {normal_id.replace('-','_')} --vep-overwrite --input-vcf {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}.bam.vcf " + 
+        f"--ncbi-build {genome} --tumor-id {normal_id} --vep-overwrite --input-vcf {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}_renamed.bam.vcf " + 
         f"--retain-fmt F1R2,F2R1 --output-maf {resultsdir}/TEMPMAFfiles/tempMuTect2/{normal_id}.bam.maf --ref-fasta {reffile}", shell=True, check=True)
     
     merge_normal_tumor_snps(resultsdir, tumor_id, normal_id)
@@ -174,12 +181,15 @@ def variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,mi
         f"-O {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}_filtered.bam.vcf.gz", shell=True, check=True)
 
     # Left align MuTect2 results (-m - is there for a reason)
-    subprocess.run(f"bcftools norm -m - -f {reffile} {resultsdir}/MuTect2_results/{tumor_id}_filtered.bam.vcf.gz " +
+    subprocess.run(f"bcftools norm -m - -f {reffile} {resultsdir}//TEMPMAFfiles/tempMuTect2/{tumor_id}_filtered.bam.vcf.gz " +
         f"-o {resultsdir}/MuTect2_results/{tumor_id}.bam.vcf", shell=True, check=True)
+    
+    subprocess.run(f"java -jar {workingdir}/picard.jar RenameSampleInVcf -I {resultsdir}//TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.vcf " +
+                   f"-O {resultsdir}//TEMPMAFfiles/tempMuTect2/{tumor_id}_renamed.bam.vcf --NEW_SAMPLE_NAME {tumor_id}", shell = True, check = True)
     
     # Convert the MuTect2 result from vcf to maf file
     subprocess.run(f"perl {workingdir}/vcf2maf/vcf2maf.pl --species {species} --vep-data {vepcache} " +
-        f"--ncbi-build {genome} --retain-fmt AD,AF,DP,F1R2,F2R1,GQ,GT,PGT,PID,PL,PS --tumor-id {tumor_id.replace('-','_')} --vep-overwrite --input-vcf {resultsdir}/MuTect2_results/{tumor_id}.bam.vcf " + 
+        f"--ncbi-build {genome} --retain-fmt AD,AF,DP,F1R2,F2R1,GQ,GT,PGT,PID,PL,PS --tumor-id {tumor_id.replace('-','_')} --vep-overwrite --input-vcf {resultsdir}//TEMPMAFfiles/tempMuTect2/{tumor_id}_renamed.bam.vcf " + 
         f"--output-maf {resultsdir}/MuTect2_results/{tumor_id}_temp.bam.maf --ref-fasta {reffile}", shell=True, check=True)
 
     tumorfile = pd.read_csv(resultsdir + "/MuTect2_results/" + tumor_id + "_temp.bam.maf", sep = "\t", header = 1, low_memory = False)
@@ -227,9 +237,6 @@ def variant_processing(tumor_id, resultsdir):
     
     if(len(mutectfile_indels) != 0):
         filloutfile = pd.concat([filloutfile, mutectfile_indels])
-
-    #filloutfile.index = [str(filloutfile['Reference_Allele'][i]) + ':' + str(int(filloutfile['Start_Position'][i])) + ':' + 
-     #                    str(filloutfile['Tumor_Seq_Allele2'][i]) for i in range(len(filloutfile))]
     
     filloutfile.to_csv(f"{resultsdir}/{tumor_id}.bam.maf",sep = '\t',na_rep='',index=False)
 

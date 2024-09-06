@@ -11,8 +11,9 @@ def process_indelmaf(outdir, tumorbam, normalbam):
         maf['N_AltFwd'] = np.nan
         maf['N_AltRev'] = np.nan
 
-    maf['t_F1R2'] = maf['t_F1R2'].fillna(0)
-    maf['t_F2R1'] = maf['t_F2R1'].fillna(0)
+    maf['t_F1R2'] = '0,0'
+    maf['t_F2R1'] = '0,0'
+    print(maf.head())
     maf[['T_RefFwd', 'T_AltFwd']] = maf['t_F1R2'].str.split(',', expand=True)
     maf[['T_RefRev', 'T_AltRev']] = maf['t_F2R1'].str.split(',', expand=True)
     
