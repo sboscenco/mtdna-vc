@@ -68,6 +68,7 @@ def merge_normal_tumor_indels(resultsdir, tumor_id, normal_id):
     
     # split up ref and alt reads 
     temp_norm[['n_ref_count_temp', 'n_alt_count_temp']] = temp_norm['N_Allelic_Depth'].str.split(',', expand=True)
+    temp_norm = temp_norm.drop_duplicates(subset = "Start_Position", keep="first")
     
     normalfile = normalfile[['Chromosome','Start_Position',
         'Reference_Allele','Tumor_Seq_Allele2','Variant_Classification','Variant_Type', "t_depth", "t_ref_count", "t_alt_count", "t_F1R2", "t_F2R1"]]
