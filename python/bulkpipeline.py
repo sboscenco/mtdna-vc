@@ -114,7 +114,7 @@ def variant_calling_normal(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,m
     # MuTect2 mitochondrial mode on tumor
     print("Running MuTect2 on tumor..")
     subprocess.run(f"gatk --java-options -Xmx4g Mutect2 -R {reffile} --mitochondria-mode true -L {mtchrom} " +
-        f"-mbq {minbq} --minimum-mapping-quality {minmapq} --pcr-indel-model AGGRESSIVE --QUIET true -I {tumordir}/{tumor_id}.bam " +
+        f"-mbq {minbq} --minimum-mapping-quality {minmapq} --pcr-indel-model HOSTILE --dont-use-soft-clipped-bases true --QUIET true -I {tumordir}/{tumor_id}.bam " +
         f"-tumor {tumor_id} -O {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.vcf.gz", shell=True, check=True)
 
     # MuTect2 mitochondrial mode on normal
@@ -173,7 +173,7 @@ def variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,mi
     # MuTect2 mitochondrial mode
     print("Running MuTect2..")
     subprocess.run(f"gatk --java-options -Xmx4g Mutect2 -R {reffile} --mitochondria-mode true -L {mtchrom} " +
-        f"-mbq {minbq} --minimum-mapping-quality {minmapq} --pcr-indel-model AGGRESSIVE --QUIET -I {tumordir}/{tumor_id}.bam " +
+        f"-mbq {minbq} --minimum-mapping-quality {minmapq} --pcr-indel-model HOSTILE --QUIET -I {tumordir}/{tumor_id}.bam " +
         f"-tumor {tumor_id.replace('-','_')} -O {resultsdir}/MuTect2_results/{tumor_id}.bam.vcf.gz", shell=True, check=True)
     
     #Filter MuTect2 results
