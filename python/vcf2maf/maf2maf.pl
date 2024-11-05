@@ -16,18 +16,14 @@ use Config;
 my ( $tum_depth_col, $tum_rad_col, $tum_vad_col ) = qw( t_depth t_ref_count t_alt_count );
 my ( $nrm_depth_col, $nrm_rad_col, $nrm_vad_col ) = qw( n_depth n_ref_count n_alt_count );
 my ( $vep_path, $vep_data, $vep_forks, $buffer_size, $any_allele ) = ( "$ENV{HOME}/miniconda3/bin", "$ENV{HOME}/.vep", 4, 5000, 0 );
-my ( $ref_fasta, $filter_vcf ) = ( "$ENV{HOME}/.vep/homo_sapiens/102_GRCh37/Homo_sapiens.GRCh37.dna.toplevel.fa.gz", "" );
+my ( $ref_fasta, $filter_vcf ) = ( "$ENV{HOME}/.vep/homo_sapiens/112_GRCh37/Homo_sapiens.GRCh37.dna.toplevel.fa.gz", "" );
 my ( $species, $ncbi_build, $cache_version, $maf_center, $max_subpop_af ) = ( "homo_sapiens", "GRCh37", "", ".", 0.0004 );
 my $perl_bin = $Config{perlpath};
 
 # Columns that can be safely borrowed from the input MAF
-<<<<<<< HEAD
 my $retain_cols = "Center,Verification_Status,Validation_Status,Mutation_Status,Sequencing_Phase" .
     ",Sequence_Source,Validation_Method,Score,BAM_file,Sequencer,Tumor_Sample_UUID" .
     ",Matched_Norm_Sample_UUID";
-=======
-my $retain_cols = "";
->>>>>>> origin/master
 
 # Columns that should never be overridden since they are results of re-annotation
 my %force_new_cols = map{ my $c = lc; ( $c, 1 )} qw( Hugo_Symbol Entrez_Gene_Id NCBI_Build
@@ -45,8 +41,9 @@ my %force_new_cols = map{ my $c = lc; ( $c, 1 )} qw( Hugo_Symbol Entrez_Gene_Id 
     MINIMISED ExAC_AF ExAC_AF_AFR ExAC_AF_AMR ExAC_AF_EAS ExAC_AF_FIN ExAC_AF_NFE ExAC_AF_OTH
     ExAC_AF_SAS GENE_PHENO FILTER flanking_bps variant_id variant_qual ExAC_AF_Adj ExAC_AC_AN_Adj
     ExAC_AC_AN ExAC_AC_AN_AFR ExAC_AC_AN_AMR ExAC_AC_AN_EAS ExAC_AC_AN_FIN ExAC_AC_AN_NFE
-    ExAC_AC_AN_OTH ExAC_AC_AN_SAS ExAC_FILTER gnomAD_AF gnomAD_AFR_AF gnomAD_AMR_AF gnomAD_ASJ_AF
-    gnomAD_EAS_AF gnomAD_FIN_AF gnomAD_NFE_AF gnomAD_OTH_AF gnomAD_SAS_AF );
+    ExAC_AC_AN_OTH ExAC_AC_AN_SAS ExAC_FILTER gnomADe_AF gnomADe_AFR_AF gnomADe_AMR_AF
+    gnomADe_ASJ_AF gnomADe_EAS_AF gnomADe_FIN_AF gnomADe_NFE_AF gnomADe_OTH_AF gnomADe_SAS_AF
+);
 
 # Check for missing or crappy arguments
 unless( @ARGV and $ARGV[0]=~m/^-/ ) {
@@ -106,8 +103,8 @@ else {
 }
 
 # Construct a maf2vcf command and run it
-my $maf2vcf_cmd = "$perl_bin $maf2vcf_path --input-maf $input_maf --output-dir $tmp_dir " .
-    "--ref-fasta $ref_fasta --tum-depth-col $tum_depth_col --tum-rad-col $tum_rad_col " .
+my $maf2vcf_cmd = "$perl_bin '$maf2vcf_path' --input-maf '$input_maf' --output-dir '$tmp_dir' " .
+    "--ref-fasta '$ref_fasta' --tum-depth-col $tum_depth_col --tum-rad-col $tum_rad_col " .
     "--tum-vad-col $tum_vad_col --nrm-depth-col $nrm_depth_col --nrm-rad-col $nrm_rad_col ".
     "--nrm-vad-col $nrm_vad_col --per-tn-vcfs";
 system( $maf2vcf_cmd ) == 0 or die "\nERROR: Failed to run maf2vcf! Command: $maf2vcf_cmd\n";
@@ -124,24 +121,21 @@ if( -s $vep_anno ) {
 else {
     warn "STATUS: Running VEP and writing to: $vep_anno\n";
     # Make sure we can find the VEP script
-    # my $vep_script = ( -s "$vep_path/vep" ? "$vep_path/vep" : "$vep_path/variant_effect_predictor.pl" );
-    # ( -s $vep_script ) or die "ERROR: Cannot find VEP script in path: $vep_path\n";
     my $vep_script = ( -s "$vep_path/vep" ? "$vep_path/vep" : "$vep_path/variant_effect_predictor.pl" );
-    ( -s $vep_script );
+    ( -s $vep_script ) or die "ERROR: Cannot find VEP script in path: $vep_path\n";
 
     # Contruct VEP command using some default options and run it
-    # my $vep_cmd = "$perl_bin $vep_script --species $species --assembly $ncbi_build --offline --no_progress --no_stats --buffer_size $buffer_size --sift b --ccds --uniprot --hgvs --symbol --numbers --domains --gene_phenotype --canonical --protein --biotype --uniprot --tsl --pubmed --variant_class --shift_hgvs 1 --check_existing --total_length --allele_number --no_escape --xref_refseq --failed 1 --vcf --flag_pick_allele --pick_order canonical,tsl,biotype,rank,ccds,length --dir $vep_data --fasta $ref_fasta --format vcf --input_file $vcf_file --output_file $vep_anno";
-    my $vep_cmd = "vep --species $species --assembly $ncbi_build --offline --no_progress --no_stats --buffer_size $buffer_size --sift b --ccds --uniprot --hgvs --symbol --numbers --domains --gene_phenotype --canonical --protein --biotype --uniprot --tsl --pubmed --variant_class --shift_hgvs 1 --check_existing --total_length --allele_number --no_escape --xref_refseq --failed 1 --vcf --flag_pick_allele --pick_order canonical,tsl,biotype,rank,ccds,length --dir $vep_data --fasta $ref_fasta --format vcf --input_file $vcf_file --output_file $vep_anno";    
+    my $vep_cmd = "$perl_bin '$vep_script' --species $species --assembly $ncbi_build --offline --no_progress --no_stats --buffer_size $buffer_size --sift b --ccds --uniprot --hgvs --symbol --numbers --domains --gene_phenotype --canonical --protein --biotype --uniprot --tsl --pubmed --variant_class --shift_hgvs 1 --check_existing --total_length --allele_number --no_escape --xref_refseq --failed 1 --vcf --flag_pick_allele --pick_order canonical,tsl,biotype,rank,ccds,length --dir '$vep_data' --fasta '$ref_fasta' --format vcf --input_file '$vcf_file' --output_file '$vep_anno'";
     # VEP barks if --fork is set to 1. So don't use this argument unless it's >1
     $vep_cmd .= " --fork $vep_forks" if( $vep_forks > 1 );
     # Require allele match for co-located variants unless user-rejected or we're using a newer VEP
-    # $vep_cmd .= " --check_allele" unless( $any_allele or $vep_script =~ m/vep$/ );
+    $vep_cmd .= " --check_allele" unless( $any_allele or $vep_script =~ m/vep$/ );
     # Add --cache-version only if the user specifically asked for a version
     $vep_cmd .= " --cache_version $cache_version" if( $cache_version );
     # Add options that only work on human variants
     if( $species eq "homo_sapiens" ) {
         # Slight change in these arguments if using the newer VEP
-        $vep_cmd .= " --polyphen b " . ( $vep_script =~ m/vep$/ ? "--af --af_1kg --af_esp --af_gnomad" : "--af --af_1kg" );
+        $vep_cmd .= " --polyphen b " . ( $vep_script =~ m/vep$/ ? "--af --af_1kg --af_gnomad" : "--gmaf --maf_1kg --maf_esp" );
     }
     # Add options that work for most species, except a few
     $vep_cmd .= " --regulatory" unless( $species eq "canis_familiaris" );
@@ -155,7 +149,7 @@ else {
 my $tsv_file = $tmp_basename . ".pairs.tsv";
 
 # Store the VEP annotated VCF header so we can duplicate it for per-TN VCFs
-my $vep_vcf_header = `grep ^## $vep_anno`;
+my $vep_vcf_header = `grep ^## '$vep_anno'`;
 
 # Split the multi-sample VEP annotated VCF into per-TN VCFs
 my ( %tn_pair, %t_col_idx, %n_col_idx, %tn_vep );
@@ -170,7 +164,7 @@ while( my $line = $vep_fh->getline ) {
     if( $line =~ m/^#CHROM/ ) {
 
         # Initialize VCF header and fill up %tn_pair for each tumor-normal pair
-        foreach ( `grep -Ev ^# $tsv_file` ){
+        foreach ( `grep -Ev ^# '$tsv_file'` ){
             chomp;
             my @ids = split( "\t", $_ );
             $t_col_idx{ $ids[ 0 ] } = 1;
@@ -231,16 +225,16 @@ foreach my $tn_vcf ( @vcfs ) {
     my ( $tumor_id, $normal_id ) = $tn_vcf=~m/^.*\/(.*)_vs_(.*)\.vep.vcf/;
     my $tn_maf = $tn_vcf;
     $tn_maf =~ s/.vep.vcf$/.vep.maf/;
-    my $vcf2maf_cmd = "$perl_bin $vcf2maf_path --input-vcf $tn_vcf --output-maf $tn_maf --inhibit-vep" .
-        " --tumor-id $tumor_id --normal-id $normal_id --vep-path $vep_path --vep-data $vep_data" .
-        " --ref-fasta $ref_fasta --ncbi-build $ncbi_build --species $species --max-subpop-af $max_subpop_af";
-    $vcf2maf_cmd .= " --custom-enst $custom_enst_file" if( $custom_enst_file );
+    my $vcf2maf_cmd = "$perl_bin '$vcf2maf_path' --input-vcf '$tn_vcf' --output-maf '$tn_maf' --inhibit-vep" .
+        " --tumor-id $tumor_id --normal-id $normal_id --vep-path '$vep_path' --vep-data '$vep_data' " .
+        " --ref-fasta '$ref_fasta' --ncbi-build $ncbi_build --species $species --max-subpop-af $max_subpop_af";
+    $vcf2maf_cmd .= " --custom-enst '$custom_enst_file'" if( $custom_enst_file );
     system( $vcf2maf_cmd ) == 0 or die "\nERROR: Failed to run vcf2maf! Command: $vcf2maf_cmd\n";
 }
 
 # Fetch the column header from one of the resulting MAFs
 my @mafs = glob( "$tmp_dir/*.vep.maf" );
-my $maf_header = `grep ^Hugo_Symbol $mafs[0] | head -n1`;
+my $maf_header = `grep ^Hugo_Symbol '$mafs[0]' | head -n1`;
 chomp( $maf_header );
 
 # If user wants to retain some columns from the input MAF, fetch those and override
@@ -351,7 +345,7 @@ if( $output_maf ) {
 }
 $maf_fh->print( "#version 2.4\n$maf_header\n" );
 foreach my $tn_maf ( @mafs ) {
-    my @maf_lines = `grep -Ev "^#|^Hugo_Symbol" $tn_maf`;
+    my @maf_lines = `grep -Ev "^#|^Hugo_Symbol" '$tn_maf'`;
     $maf_fh->print( @maf_lines );
 }
 $maf_fh->close;
@@ -389,7 +383,7 @@ __DATA__
  --species        Ensembl-friendly name of species (e.g. mus_musculus for mouse) [homo_sapiens]
  --ncbi-build     NCBI reference assembly of variants in MAF (e.g. GRCm38 for mouse) [GRCh37]
  --cache-version  Version of offline cache to use with VEP (e.g. 75, 84, 91) [Default: Installed version]
- --ref-fasta      Reference FASTA file [~/.vep/homo_sapiens/102_GRCh37/Homo_sapiens.GRCh37.dna.toplevel.fa.gz]
+ --ref-fasta      Reference FASTA file [~/.vep/homo_sapiens/112_GRCh37/Homo_sapiens.GRCh37.dna.toplevel.fa.gz]
  --help           Print a brief help message and quit
  --man            Print the detailed manual
 
@@ -408,7 +402,6 @@ This script runs a given MAF through maf2vcf to generate per-TN-pair VCFs in a t
 =head1 AUTHORS
 
  Cyriac Kandoth (ckandoth@gmail.com)
- Qingguo Wang (josephw10000@gmail.com)
 
 =head1 LICENSE
 

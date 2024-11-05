@@ -42,7 +42,7 @@ unless( @ARGV and $ARGV[0] =~ m/^-/ ) {
 # Parse options and print usage if there is a syntax error, or if usage was explicitly requested
 my ( $man, $help, $add_filters ) = ( 0, 0, 0 );
 my ( $input_vcf, $output_vcf, $new_tumor_id, $new_normal_id, $remap_chain );
-my ( $tumor_bam, $normal_bam, $ref_fasta ) = ( "", "", "$ENV{HOME}/.vep/homo_sapiens/102_GRCh37/Homo_sapiens.GRCh37.dna.toplevel.fa.gz" );
+my ( $tumor_bam, $normal_bam, $ref_fasta ) = ( "", "", "$ENV{HOME}/.vep/homo_sapiens/112_GRCh37/Homo_sapiens.GRCh37.dna.toplevel.fa.gz" );
 GetOptions(
     'help!' => \$help,
     'man!' => \$man,
@@ -96,8 +96,8 @@ if( $remap_chain ) {
     ( $liftover and -e $liftover ) or die "ERROR: Please install liftOver, and make sure it's in your PATH\n";
 
     # Make a BED file from the VCF, run liftOver on it, and create a hash mapping old to new loci
-    `grep -v ^# $input_vcf | cut -f1,2 | awk '{OFS="\\t"; print \$1,\$2-1,\$2,\$1":"\$2}' > $tmp_dir/input.bed`;
-    %remap = map{chomp; my @c=split("\t"); ($c[3], "$c[0]:$c[2]")}`$liftover $tmp_dir/input.bed $remap_chain /dev/stdout /dev/null 2> /dev/null`;
+    `grep -v ^# '$input_vcf' | cut -f1,2 | awk '{OFS="\\t"; print \$1,\$2-1,\$2,\$1":"\$2}' > '$tmp_dir/input.bed'`;
+    %remap = map{chomp; my @c=split("\t"); ($c[3], "$c[0]:$c[2]")}`'$liftover' '$tmp_dir/input.bed' '$remap_chain' /dev/stdout /dev/null 2> /dev/null`;
     unlink( "$tmp_dir/input.bed" );
 
     # Create a new VCF in the temp folder, with remapped loci
@@ -219,7 +219,7 @@ while( my $line = $vcf_in_fh->getline ) {
         $nrm_info{DP} = $nrm_info{AD} = $nrm_info{ADF} = $nrm_info{ADR} = ".";
 
         # Generate mpileup and parse out only DP,AD,ADF,ADR for tumor/normal samples
-        my @p_lines = `samtools mpileup --region $chrom:$pos-$pos --count-orphans --no-BAQ --min-MQ 1 --min-BQ 5 --ignore-RG --excl-flags UNMAP,SECONDARY,QCFAIL,DUP --VCF --uncompressed --output-tags DP,AD,ADF,ADR --ext-prob 20 --gap-frac 0.002 --tandem-qual 80 --min-ireads 1 --open-prob 30 --fasta-ref $ref_fasta $tumor_bam $normal_bam 2> /dev/null`;
+        my @p_lines = `'$samtools' mpileup --region $chrom:$pos-$pos --count-orphans --no-BAQ --min-MQ 1 --min-BQ 5 --ignore-RG --excl-flags UNMAP,SECONDARY,QCFAIL,DUP --VCF --uncompressed --output-tags DP,AD,ADF,ADR --ext-prob 20 --gap-frac 0.002 --tandem-qual 80 --min-ireads 1 --open-prob 30 --fasta-ref '$ref_fasta' '$tumor_bam' '$normal_bam' 2> /dev/null`;
 
         my ( $p_vcf_tumor_idx, $p_vcf_normal_idx ) = ( 0, 1 );
         foreach my $p_line ( @p_lines ) {
@@ -486,7 +486,7 @@ __DATA__
  --new-normal-id  Matched normal ID to use in the new VCF [--vcf-normal-id]
  --tumor-bam      Path to tumor BAM, if provided, will add or override DP:AD:ADF:ADR in output VCF
  --normal-bam     Path to normal BAM, if provided, will add or override DP:AD:ADF:ADR in output VCF
- --ref-fasta      Reference FASTA file [~/.vep/homo_sapiens/102_GRCh37/Homo_sapiens.GRCh37.dna.toplevel.fa.gz]
+ --ref-fasta      Reference FASTA file [~/.vep/homo_sapiens/112_GRCh37/Homo_sapiens.GRCh37.dna.toplevel.fa.gz]
  --add-header     VCF-style header lines to add to the output VCF; Use "\n" to separate lines []
  --add-info       Comma-delimited tag=value pairs to add as INFO fields in the output VCF []
  --retain-info    Comma-delimited names of INFO fields to retain in output VCF [SOMATIC,SS,I16,MQSB]

@@ -9,7 +9,7 @@ use Getopt::Long qw( GetOptions );
 use Pod::Usage qw( pod2usage );
 
 # Set any default paths and constants
-my $ref_fasta = "$ENV{HOME}/.vep/homo_sapiens/102_GRCh37/Homo_sapiens.GRCh37.dna.toplevel.fa.gz";
+my $ref_fasta = "$ENV{HOME}/.vep/homo_sapiens/112_GRCh37/Homo_sapiens.GRCh37.dna.toplevel.fa.gz";
 my ( $tum_depth_col, $tum_rad_col, $tum_vad_col ) = qw( t_depth t_ref_count t_alt_count );
 my ( $nrm_depth_col, $nrm_rad_col, $nrm_vad_col ) = qw( n_depth n_ref_count n_alt_count );
 
@@ -78,7 +78,7 @@ while( my $line = $maf_fh->getline ) {
         # Fetch all tumor-normal paired IDs from the MAF, doing some whitespace cleanup in the same step
         my $tn_idx = $col_idx{tumor_sample_barcode} + 1;
         $tn_idx .= ( "," . ( $col_idx{matched_norm_sample_barcode} + 1 )) if( defined $col_idx{matched_norm_sample_barcode} );
-        @tn_pair = map{s/^\s+|\s+$|\r|\n//g; s/\s*\t\s*/\t/; $_}`grep -aEiv "^#|^Hugo_Symbol|^Chromosome|^Tumor_Sample_Barcode" $input_maf | cut -f $tn_idx | sort -u`;
+        @tn_pair = map{s/^\s+|\s+$|\r|\n//g; s/\s*\t\s*/\t/; $_}`grep -aEiv "^#|^Hugo_Symbol|^Chromosome|^Tumor_Sample_Barcode" '$input_maf' | cut -f $tn_idx | sort -u`;
 
         # Quit if one of the TN barcodes are missing, or they contain characters not allowed in Unix filenames
         map{ ( !m/^\s*$|^#|\0|\// ) or die "ERROR: Invalid Tumor_Sample_Barcode in MAF: \"$_\"\n"} @tn_pair;
@@ -103,7 +103,7 @@ $maf_fh->close;
 my ( @regions_split, $lines );
 my @regions = keys %uniq_regions;
 push( @regions_split, [ splice( @regions, 0, 5000 ) ] ) while @regions;
-map{ my $loci = join( " ", @{$_} ); $lines .= `$samtools faidx $ref_fasta $loci` } @regions_split;
+map{ my $loci = join( " ", @{$_} ); $lines .= `'$samtools' faidx '$ref_fasta' $loci` } @regions_split;
 foreach my $line ( grep( length, split( ">", $lines ))) {
     # Carefully split this FASTA entry, properly chomping newlines for long indels
     my ( $locus, $bps ) = split( "\n", $line, 2 );
@@ -119,8 +119,8 @@ foreach my $line ( grep( length, split( ">", $lines ))) {
 
 # Create VCF header lines for the reference FASTA, its contigs, and their lengths
 my $ref_fai = $ref_fasta . ".fai";
-`$samtools faidx $ref_fasta` unless( -s $ref_fai );
-my @ref_contigs = map { chomp; my ($chr, $len)=split("\t"); "##contig=<ID=$chr,length=$len>\n" } `cut -f1,2 $ref_fai | sort -k1,1V`;
+`'$samtools' faidx '$ref_fasta'` unless( -s $ref_fai );
+my @ref_contigs = map { chomp; my ($chr, $len)=split("\t"); "##contig=<ID=$chr,length=$len>\n" } `cut -f1,2 '$ref_fai' | sort -k1,1V`;
 my $ref_header = "##reference=file://$ref_fasta\n" . join( "", @ref_contigs );
 
 # Parse through each variant in the MAF, and fill up the respective per-sample VCFs
@@ -352,16 +352,12 @@ __DATA__
  perl maf2vcf.pl --help
  perl maf2vcf.pl --input-maf test.maf --output-dir vcfs
 
-<<<<<<< HEAD
 =head1 OPTIONS
-=======
-fa=head1 OPTIONS
->>>>>>> origin/master
 
  --input-maf      Path to input file in MAF format
  --output-dir     Path to output directory where VCFs will be stored, one per TN-pair
  --output-vcf     Path to output multi-sample VCF containing all TN-pairs [<output-dir>/<input-maf-name>.vcf]
- --ref-fasta      Path to reference Fasta file [~/.vep/homo_sapiens/102_GRCh37/Homo_sapiens.GRCh37.dna.toplevel.fa.gz]
+ --ref-fasta      Path to reference Fasta file [~/.vep/homo_sapiens/112_GRCh37/Homo_sapiens.GRCh37.dna.toplevel.fa.gz]
  --per-tn-vcfs    Specify this to generate VCFs per-TN pair, in addition to the multi-sample VCF
  --tum-depth-col  Name of MAF column for read depth in tumor BAM [t_depth]
  --tum-rad-col    Name of MAF column for reference allele depth in tumor BAM [t_ref_count]
@@ -380,12 +376,11 @@ This script breaks down variants in a MAF into a multi-sample VCF, in preparatio
 
  Homepage: https://github.com/ckandoth/vcf2maf
  VCF format: http://samtools.github.io/hts-specs/
- MAF format: https://wiki.nci.nih.gov/x/eJaPAQ
+ MAF format: https://docs.gdc.cancer.gov/Data/File_Formats/MAF_Format
 
 =head1 AUTHORS
 
  Cyriac Kandoth (ckandoth@gmail.com)
- Qingguo Wang (josephw10000@gmail.com)
 
 =head1 LICENSE
 
