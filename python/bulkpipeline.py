@@ -173,8 +173,8 @@ def variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,mi
     # MuTect2 mitochondrial mode
     print("Running MuTect2..")
     subprocess.run(f"gatk --java-options -Xmx4g Mutect2 -R {reffile} --mitochondria-mode true -L {mtchrom} " +
-        f"-mbq {minbq} --minimum-mapping-quality {minmapq} --pcr-indel-model HOSTILE --QUIET -I {tumordir}/{tumor_id}.bam " +
-        f"-tumor {tumor_id.replace('-','_')} -O {resultsdir}/MuTect2_results/{tumor_id}.bam.vcf.gz", shell=True, check=True)
+        f"-mbq {minbq} --minimum-mapping-quality {minmapq} --pcr-indel-model HOSTILE --dont-use-soft-clipped-bases true --QUIET -I {tumordir}/{tumor_id}.bam " +
+        f"-tumor {tumor_id.replace('-','_')} -O {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.vcf.gz", shell=True, check=True)
     
     #Filter MuTect2 results
     subprocess.run(f"gatk --java-options -Xmx4g FilterMutectCalls -R {reffile} --min-reads-per-strand 2 --mitochondria-mode true -L {mtchrom} " +
@@ -182,18 +182,18 @@ def variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,mi
         f"-O {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}_filtered.bam.vcf.gz", shell=True, check=True)
 
     # Left align MuTect2 results (-m - is there for a reason)
-    subprocess.run(f"bcftools norm -m - -f {reffile} {resultsdir}//TEMPMAFfiles/tempMuTect2/{tumor_id}_filtered.bam.vcf.gz " +
-        f"-o {resultsdir}/MuTect2_results/{tumor_id}.bam.vcf", shell=True, check=True)
+    subprocess.run(f"bcftools norm -m - -f {reffile} {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}_filtered.bam.vcf.gz " +
+        f"-o {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.vcf", shell=True, check=True)
     
-    subprocess.run(f"java -jar {workingdir}/picard.jar RenameSampleInVcf -I {resultsdir}//TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.vcf " +
-                   f"-O {resultsdir}//TEMPMAFfiles/tempMuTect2/{tumor_id}_renamed.bam.vcf --NEW_SAMPLE_NAME {tumor_id}", shell = True, check = True)
+    subprocess.run(f"java -jar {workingdir}/picard.jar RenameSampleInVcf -I {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.vcf " +
+                   f"-O {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}_renamed.bam.vcf --NEW_SAMPLE_NAME {tumor_id}", shell = True, check = True)
     
     # Convert the MuTect2 result from vcf to maf file
     subprocess.run(f"perl {workingdir}/vcf2maf/vcf2maf.pl --species {species} --vep-data {vepcache} " +
-        f"--ncbi-build {genome} --retain-fmt AD,AF,DP,F1R2,F2R1,GQ,GT,PGT,PID,PL,PS --tumor-id {tumor_id.replace('-','_')} --vep-overwrite --input-vcf {resultsdir}//TEMPMAFfiles/tempMuTect2/{tumor_id}_renamed.bam.vcf " + 
-        f"--output-maf {resultsdir}/MuTect2_results/{tumor_id}_temp.bam.maf --ref-fasta {reffile}", shell=True, check=True)
+        f"--ncbi-build {genome} --retain-fmt AD,AF,DP,F1R2,F2R1,GQ,GT,PGT,PID,PL,PS --tumor-id {tumor_id.replace('-','_')} --vep-overwrite --input-vcf {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}_renamed.bam.vcf " + 
+        f"--output-maf {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}_temp.bam.maf --ref-fasta {reffile}", shell=True, check=True)
 
-    tumorfile = pd.read_csv(resultsdir + "/MuTect2_results/" + tumor_id + "_temp.bam.maf", sep = "\t", header = 1, low_memory = False)
+    tumorfile = pd.read_csv(resultsdir + "/TEMPMAFfiles/tempMuTect2/" + tumor_id + "_temp.bam.maf", sep = "\t", header = 1, low_memory = False)
 
     tumorfile_snp = tumorfile.loc[tumorfile["Variant_Type"] == "SNP"]
     tumorfile_indel = tumorfile.loc[tumorfile["Variant_Type"].isin(["INS", "DEL"])]
@@ -201,7 +201,7 @@ def variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,mi
     tumorfile_snp = tumorfile_snp[['Chromosome','Start_Position',
         'Reference_Allele','Tumor_Seq_Allele2','Variant_Classification','Variant_Type']]
     
-    tumorfile_snp.to_csv(f"{resultsdir}/MuTect2_results/{tumor_id}.bam.maf", sep = "\t", na_rep = "NA", index = False)
+    tumorfile_snp.to_csv(f"{resultsdir}/MuTect2_results/{tumor_id}_snp.bam.maf", sep = "\t", na_rep = "NA", index = False)
     tumorfile_indel.to_csv(f"{resultsdir}/MuTect2_results/{tumor_id}_tempindel.bam.maf", sep = "\t", na_rep = "NA", index = False)
 
     final_processing.process_indelmaf(resultsdir + "/MuTect2_results/", tumor_id + '_tempindel.bam', "")

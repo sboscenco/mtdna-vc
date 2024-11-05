@@ -20,7 +20,7 @@ def process_indelmaf(outdir, tumorbam, normalbam):
     maf = maf[~maf['Start_Position'].isin(list(range(3106, 3107)))]
     maf.to_csv(outdir + tumorbam + ".maf",index = None,sep = '\t')
 
-def process_maf(outdir, workingdir, tumorbam, normalbam, indel = False):
+def process_maf(outdir, workingdir, tumorbam, normalbam = "", indel = False):
    
     # Read in files
     maf = pd.read_csv(outdir + "/" + tumorbam + '.maf',header = 0,sep = '\t',comment = '#')
@@ -36,13 +36,13 @@ def process_maf(outdir, workingdir, tumorbam, normalbam, indel = False):
     maf.loc[(maf['Start_Position'].map(int) <= 576) | (maf['Start_Position'].map(int) >= 16024),'Hugo_Symbol'] = 'ControlRegion'
     maf.loc[(maf['Start_Position'].map(int) <= 5798) & (maf['Start_Position'].map(int) >= 5721),'Hugo_Symbol'] = 'MT-OLR'
     
-    list_cols = ["Hugo_Symbol", "Chromosome", "NCBI_Build", "Start_Position", "End_Position", "Strand", "Variant_Classification", "Variant_Type", "Reference_Allele", 
-               "Tumor_Seq_Allele2", "Tumor_Sample_Barcode", "Normal_Sample_Barcode", "Match_Norm_Seq_Allele1", "Match_Norm_Seq_Allele2", "Gene",
+    list_cols = ["Hugo_Symbol", "Chromosome", "NCBI_Build", "Start_Position", "End_Position", "Strand", "Variant_Classification", "Variant_Type", "Reference_Allele",
+               "Tumor_Seq_Allele2", "Tumor_Sample_Barcode", "Match_Norm_Seq_Allele1", "Match_Norm_Seq_Allele2", "Gene",
                "Consequence", "HGVSc", "HGVSp", "HGVSp_Short", 'flanking_bps',
                "T_TotalDepth", "T_RefCount", "T_AltCount", "T_AltFwd", "T_AltRev"]
-    
+
     # subsetting columns of interest
-    if(normalbam != ""): list_cols += ["N_TotalDepth", "N_RefCount", "N_AltCount", 'N_AltFwd', 'N_AltRev']
+    if(normalbam != ""): list_cols += ["Normal_Sample_Barcode", "N_TotalDepth", "N_RefCount", "N_AltCount", 'N_AltFwd', 'N_AltRev']
     maf = maf[list_cols]
 
     # create short variant id
@@ -88,4 +88,3 @@ def process_maf(outdir, workingdir, tumorbam, normalbam, indel = False):
          maf.to_csv(outdir + "/" + tumorbam + '.maf', index = None, sep = '\t')
     
    
-
