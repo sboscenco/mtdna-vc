@@ -174,7 +174,7 @@ def variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,mi
     print("Running MuTect2..")
     subprocess.run(f"gatk --java-options -Xmx4g Mutect2 -R {reffile} --mitochondria-mode true -L {mtchrom} " +
         f"-mbq {minbq} --minimum-mapping-quality {minmapq} --pcr-indel-model HOSTILE --dont-use-soft-clipped-bases true --QUIET -I {tumordir}/{tumor_id}.bam " +
-        f"-tumor {tumor_id.replace('-','_')} -O {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.vcf.gz", shell=True, check=True)
+        f"-tumor {tumor_id} -O {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}.bam.vcf.gz", shell=True, check=True)
     
     #Filter MuTect2 results
     subprocess.run(f"gatk --java-options -Xmx4g FilterMutectCalls -R {reffile} --min-reads-per-strand 2 --mitochondria-mode true -L {mtchrom} " +
@@ -190,7 +190,7 @@ def variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,mi
     
     # Convert the MuTect2 result from vcf to maf file
     subprocess.run(f"perl {workingdir}/vcf2maf/vcf2maf.pl --species {species} --vep-data {vepcache} " +
-        f"--ncbi-build {genome} --retain-fmt AD,AF,DP,F1R2,F2R1,GQ,GT,PGT,PID,PL,PS --tumor-id {tumor_id.replace('-','_')} --vep-overwrite --input-vcf {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}_renamed.bam.vcf " + 
+        f"--ncbi-build {genome} --retain-fmt AD,AF,DP,F1R2,F2R1,GQ,GT,PGT,PID,PL,PS --tumor-id {tumor_id} --vep-overwrite --input-vcf {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}_renamed.bam.vcf " + 
         f"--output-maf {resultsdir}/TEMPMAFfiles/tempMuTect2/{tumor_id}_temp.bam.maf --ref-fasta {reffile}", shell=True, check=True)
 
     tumorfile = pd.read_csv(resultsdir + "/TEMPMAFfiles/tempMuTect2/" + tumor_id + "_temp.bam.maf", sep = "\t", header = 1, low_memory = False)
