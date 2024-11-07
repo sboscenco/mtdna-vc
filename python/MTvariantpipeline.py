@@ -14,7 +14,7 @@ def call_vars_normal(tumorbam, normalbam, mtchrom, minmapq, minbq, fasta, datadi
     subprocess.run(f"bcftools mpileup --region {mtchrom} --count-orphans --no-BAQ --min-MQ {minmapq} --min-BQ {minbq} " \
                 + "--ignore-RG --skip-any-set UNMAP,SECONDARY,QCFAIL,DUP --annotate DP,AD,ADF,ADR --gap-frac 0.005 " \
                 + f"--tandem-qual 80 -L 1000000 -d 1000000 --open-prob 30 --skip-indels --fasta-ref {fasta} {datadir}/{tumorbam} {normaldir}/{normalbam} " \
-                + f"| bcftools call --multiallelic-caller --ploidy {ncbibuild} --keep-alts" \
+                + f"| bcftools call --multiallelic-caller --ploidy {ncbibuild} --keep-alts " \
                 + f"| bcftools norm --multiallelics -any --do-not-normalize" \
                 + f"| bcftools query --format '%CHROM\t%POS\t%REF\t%ALT[\t%AD\t%DP\t%ADF\t%ADR]\n' > {vcfdir}/{tumorbam}_temp.maf", shell = True, check = True)
 
@@ -24,7 +24,7 @@ def call_vars(tumorbam, mtchrom, minmapq, minbq, fasta, datadir, vcfdir, ncbibui
     subprocess.run(f"bcftools mpileup --region {mtchrom} --count-orphans --no-BAQ --min-MQ {minmapq} --min-BQ {minbq} " \
                 + "--ignore-RG --skip-any-set UNMAP,SECONDARY,QCFAIL,DUP --annotate DP,AD,ADF,ADR --gap-frac 0.005 " \
                 + f"--tandem-qual 80 -L 1000000 -d 1000000 --open-prob 30 --skip-indels --fasta-ref {fasta} {datadir}/{tumorbam}  " \
-                + f"| bcftools call --multiallelic-caller --ploidy {ncbibuild} --keep-alts" \
+                + f"| bcftools call --multiallelic-caller --ploidy {ncbibuild} --keep-alts " \
                 + f"| bcftools norm --multiallelics -any --do-not-normalize" \
                 + f"| bcftools query --format '%CHROM\t%POS\t%REF\t%ALT[\t%AD\t%DP\t%ADF\t%ADR]\n' > {vcfdir}/{tumorbam}_temp.maf", shell = True, check = True)
     
