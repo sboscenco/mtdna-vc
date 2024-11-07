@@ -16,7 +16,7 @@ def mappingquality(reffile, datadir, file):
     for file in os.listdir(datadir):
         if file.endswith(".bam"):
             subprocess.run(f"java -Xmx5G -Xms5G -jar {workingdir}/reference/GenomeAnalysisTK.jar " +
-                f"-T SplitNCigarReads -R {reffile} -I {datadir}/{file}.bam -o {datadir}/{file}.bam " +
+                f"-T SplitNCigarReads -R {reffile} -I {datadir}/{file} -o {datadir}/{file} " +
                 "-rf ReassignOneMappingQuality -RMQF 255 -RMQT 60 -U ALLOW_N_CIGAR_READS --disable_bam_indexing", shell=True, check=True)
             subprocess.run(f"samtools index {datadir}/{file}.bam", shell=True, check=True)
 
