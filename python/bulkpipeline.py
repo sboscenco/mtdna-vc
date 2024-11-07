@@ -11,6 +11,15 @@ from Bio.Seq import Seq
 import make_mutsig
 import final_processing
 
+def mappingquality(reffile, datadir, file):
+    print("Converting mapping qualities...")
+    for file in os.listdir(datadir):
+        if file.endswith(".bam"):
+            subprocess.run(f"java -Xmx5G -Xms5G -jar {workingdir}/reference/GenomeAnalysisTK.jar " +
+                f"-T SplitNCigarReads -R {reffile} -I {datadir}/{file}.bam -o {datadir}/{file}.bam " +
+                "-rf ReassignOneMappingQuality -RMQF 255 -RMQT 60 -U ALLOW_N_CIGAR_READS --disable_bam_indexing", shell=True, check=True)
+            subprocess.run(f"samtools index {datadir}/{file}.bam", shell=True, check=True)
+
 # set parameters for genome build
 def set_genome_params(genome, fasta, workingdir):
     valid_genomes = {"GRCm38": "/mm10/mm10_MT.fa", "mm10": "/mm10/mm10_MT.fa", "GRCh38": "/reference/GRCh38/genome_MT.fa", "GRCh37": "/reference/GRCh37/Homo_sapiens.GRCh37.dna.chromosome.MT.fa"}
@@ -282,10 +291,14 @@ if __name__ == "__main__":
     
     tumordir = os.path.dirname(tumor_id) if '/' in tumor_id else os.getcwd()
     tumor_id = os.path.splitext(os.path.basename(tumor_id))[0]
-
+    if(molecule == "rna"):
+        mappingquality(reffile, tumordir, tumor_id)
+            
     if normal_id != "":
        normaldir = os.path.dirname(normal_id) if '/' in normal_id else os.getcwd()
-       normal_id = os.path.splitext(os.path.basename(normal_id))[0]   
+       normal_id = os.path.splitext(os.path.basename(normal_id))[0]
+       if(molecule == "rna"):
+           mappingquality(reffile, normaldir, normal_id)   
        variant_calling_normal(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,minstrand,workingdir,vepcache,mtchrom,species,normal_id,normaldir)
     else:
         variant_calling(resultsdir,tumordir,tumor_id,reffile,genome,minmapq,minbq,minstrand,workingdir,vepcache,mtchrom,species)
