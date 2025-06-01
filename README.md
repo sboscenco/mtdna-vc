@@ -68,6 +68,7 @@ samtools index [library_id]_chrM.bam
 ``` 
 
 # Running the pipeline
+```bash
 python3 "$script_dir/bulkpipeline.py" \
   -t "$bam_path" \                     # Path to input BAM or file list
   -w "$script_dir" \                   # Path to pipeline scripts
@@ -75,8 +76,10 @@ python3 "$script_dir/bulkpipeline.py" \
   -vc "$vep_cache_dir" \              # VEP cache directory
   -r "$ref_file" \                    # Reference genome FASTA
   -g "$genome"                        # Genome build (e.g., GRCh37 or GRCh38)
+``` 
 
 # Usage example
+```bash
 python3 "$script_dir/bulkpipeline.py" \
   -t /data1/reznike/elbakoz/data/tang_cellmetabolism_2023/example_mt.bam \
   -w /home/elbakoz/mtdna-vc/python \
@@ -84,3 +87,4 @@ python3 "$script_dir/bulkpipeline.py" \
   -vc /data1/reznike/elbakoz/reference/grch37/human_g1k_v37.fasta \
   -r /data1/reznike/elbakoz/reference/vep_cache \
   -g "GRCh37"
+``` 
