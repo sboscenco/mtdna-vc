@@ -94,4 +94,3 @@ python3 "$script_dir/bulkpipeline.py" \
   -r /data1/reznike/elbakoz/reference/vep_cache \
   -g "GRCh37"
 ``` 
-
