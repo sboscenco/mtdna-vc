@@ -69,16 +69,22 @@ samtools index [library_id]_chrM.bam
 
 # Running the pipeline
 ```bash
-python3 "$script_dir/bulkpipeline.py" \
-  -t "$bam_path" \                     # Path to input BAM or file list
-  -w "$script_dir" \                   # Path to pipeline scripts
-  -re "$results_dir/$sample_name" \   # Output directory for results
-  -vc "$vep_cache_dir" \              # VEP cache directory
-  -r "$ref_file" \                    # Reference genome FASTA
-  -g "$genome"                        # Genome build (e.g., GRCh37 or GRCh38)
+python3 bulkpipeline.py \
+  -t /path/to/tumor_sample.bam \                  # REQUIRED: Tumor sample BAM or file list
+  -w /path/to/pipeline/scripts \                  # REQUIRED: Directory where the scripts are located
+  -re /path/to/results/sample_name \              # REQUIRED: Directory to store the results
+  -r /path/to/reference.fasta \                   # Reference genome FASTA (optional)
+  -g "GRCh37" \                                     # Genome build: GRCh37 or GRCh38 (default: GRCh37)
+  -q 20 \                                         # Minimum mapping quality (default: 20)
+  -Q 20 \                                         # Minimum base quality (default: 20)
+  -s 2 \                                          # Min reads on each strand to call mutation (default: 2)
+  -th 0.1 \                                       # Threshold to call cell wild-type (default: 0.1)
+  -vc /path/to/vep_cache \                        # Path to local VEP cache (default: $HOME/.vep)
+  -n /path/to/normal_sample.bam \                 # Normal sample BAM file (optional)
+  -mo "dna"                                         # Molecule type: dna or rna (default: dna)
 ``` 
 
-# Usage example
+# Usage example (tumor only)
 ```bash
 python3 "$script_dir/bulkpipeline.py" \
   -t /data1/reznike/elbakoz/data/tang_cellmetabolism_2023/example_mt.bam \
@@ -88,3 +94,4 @@ python3 "$script_dir/bulkpipeline.py" \
   -r /data1/reznike/elbakoz/reference/vep_cache \
   -g "GRCh37"
 ``` 
+
