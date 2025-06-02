@@ -97,4 +97,11 @@ python3 "$script_dir/bulkpipeline.py" \
 
 ## Output Format
 
-<pre> ## Output Format After running the pipeline, the following output directories and files will be generated for each sample (named using the `sample_id`): ``` sample_id/ ├── MTvariant_results/ # Intermediate results from MTvariant calling ├── MuTect2_results/ # Intermediate results from MuTect2 ├── TEMPMAFfiles/ # Intermediate files used during MAF generation ├── sample_id.bam.maf # MAIN OUTPUT: Combined annotated MAF file for the sample └── sample_id_mutsig.tsv # Mutation summary file for MutSig analysis ``` **Note:** - `sample_id` is inferred from the BAM filename (e.g., `rcc5_chrM`) - The `.bam.maf` file is the primary output used for downstream analysis </pre>
+After running the pipeline, the following output directories and files will be generated for each sample (named using the `sample_id`):
+
+sample_id/
+├── MTvariant_results/ # Intermediate results from MTvariant calling
+├── MuTect2_results/ # Intermediate results from MuTect2
+├── TEMPMAFfiles/ # Intermediate files used during MAF generation
+├── sample_id.bam.maf # MAIN OUTPUT: Combined annotated MAF file for the sample
+└── sample_id_mutsig.tsv # Mutation summary file for MutSig analysis
