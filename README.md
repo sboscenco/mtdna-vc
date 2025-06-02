@@ -23,7 +23,12 @@ conda activate mito
 Verify installation of the mito environment
 ```bash
 conda env list
-``` 
+```
+
+Set up mito conda environment
+```bash
+conda env create -f
+```
 
 ## Setup VEP cache
 Additionally, a VEP offline cache needs to be installed (NOTE: CACHE MUST BE SAME VERSION AS VEP VERSION and THE REFERENCE GENOME USED -- 112.0 in mito.yaml default). Please use https://ftp.ensembl.org/pub/release-112/variation/indexed_vep_cache/ to install vep cache. Due to the size of the caches, it will likely take several hours to install.
