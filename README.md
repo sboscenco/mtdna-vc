@@ -67,7 +67,7 @@ Index the input .bam file:
 samtools index [library_id]_chrM.bam
 ``` 
 
-# Running the pipeline
+## Running the pipeline
 ```bash
 python3 bulkpipeline.py \
   -t /path/to/tumor_sample.bam \                  # REQUIRED: Tumor sample BAM or file list
@@ -84,7 +84,7 @@ python3 bulkpipeline.py \
   -mo "dna"                                         # Molecule type: dna or rna (default: dna)
 ``` 
 
-# Usage example (tumor only)
+## Usage example (tumor only)
 ```bash
 python3 "$script_dir/bulkpipeline.py" \
   -t /data1/reznike/elbakoz/data/tang_cellmetabolism_2023/example_mt.bam \
