@@ -104,5 +104,4 @@ sample_id/
 ├── MuTect2_results/ # Intermediate results from MuTect2
 ├── TEMPMAFfiles/ # Intermediate files used during MAF generation
 ├── sample_id.bam.maf # MAIN OUTPUT: Combined annotated MAF file for the sample
-├── sample_id_mutsig.tsv # Mutation summary file for MutSig analysis
-
+└── sample_id_mutsig.tsv # Mutation summary file for MutSig analysis
