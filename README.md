@@ -99,9 +99,10 @@ python3 "$script_dir/bulkpipeline.py" \
 
 After running the pipeline, the following output directories and files will be generated for each sample (named using the `sample_id`):
 
+```text
 sample_id/
-├── MTvariant_results/ # Intermediate results from MTvariant calling
-├── MuTect2_results/ # Intermediate results from MuTect2
-├── TEMPMAFfiles/ # Intermediate files used during MAF generation
-├── sample_id.bam.maf # MAIN OUTPUT: Combined annotated MAF file for the sample
-└── sample_id_mutsig.tsv # Mutation summary file for MutSig analysis
+├── MTvariant_results/           # Intermediate results from MTvariant calling
+├── MuTect2_results/             # Intermediate results from MuTect2
+├── TEMPMAFfiles/                # Intermediate files used during MAF generation
+├── sample_id.bam.maf            # MAIN OUTPUT: Combined annotated MAF file for the sample
+└── sample_id_mutsig.tsv         # Mutation summary file for MutSig analysis
